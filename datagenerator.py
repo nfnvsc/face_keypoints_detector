@@ -58,9 +58,8 @@ class DataGenerator(keras.utils.Sequence):
 
             dir = os.path.join(self.data_dir, name)
 
-            tmp = np.load(dir, allow_pickle=True)
+            tmp = np.load(dir, allow_pickle=True)["arr_" + idx]
 
-            X[i,] = tmp[0][int(idx)]
-            y[i] = tmp[1][int(idx)]
+            X[i,], y[i] = tmp
 
         return X, y
