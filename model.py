@@ -1,5 +1,6 @@
 import os
 import tensorflow as tf
+import config
 from tensorflow import keras
 from tensorflow.keras import Sequential
 from tensorflow.keras.layers import *
@@ -11,25 +12,25 @@ def make_model():
         AlexNet adapted network
     """
     model = Sequential()
-    model.add(Conv2D(48, (7,7), (4,4), activation="relu", input_shape=(208, 172, 3)))
+    model.add(Conv2D(24, (7,7), (4,4), activation="relu", input_shape=(*config.TARGET_SIZE, 3)))
     model.add(BatchNormalization())
-    model.add(MaxPooling2D((3,3), strides=(2,2)))
-    model.add(Conv2D(128, (5,5), padding="same", activation="relu"))
+    model.add(MaxPooling2D((2,2), strides=(2,2)))
+    model.add(Conv2D(64, (5,5), padding="same", activation="relu"))
+    #model.add(BatchNormalization())
+    #model.add(MaxPooling2D((2,2), strides=(2,2)))
+    #model.add(Conv2D(192, (3,3), padding="same", activation="relu"))
     model.add(BatchNormalization())
-    model.add(MaxPooling2D((3,3), strides=(2,2)))
-    model.add(Conv2D(192, (3,3), padding="same", activation="relu"))
+    model.add(Conv2D(96, (3,3), activation="relu"))
     model.add(BatchNormalization())
-    model.add(Conv2D(192, (3,3), activation="relu"))
+    model.add(Conv2D(96, (3,3), activation="relu"))
     model.add(BatchNormalization())
-    model.add(Conv2D(128, (3,3), activation="relu"))
-    model.add(BatchNormalization())
-    model.add(MaxPooling2D((3,3), strides=(2,2)))
+    model.add(MaxPooling2D((2,2), strides=(2,2)))
     model.add(Flatten())
-    model.add(Dense(1024, activation="relu"))
+    model.add(Dense(512, activation="relu"))
     model.add(Dropout(0.3))
-    model.add(Dense(1024, activation="relu"))
+    model.add(Dense(512, activation="relu"))
     model.add(Dropout(0.3))
-    model.add(Dense(68*2, activation='sigmoid'))
+    model.add(Dense(config.TARGET_OUTPUT, activation='sigmoid'))
 
     sgd = SGD(lr=0.01,momentum = 0.9,nesterov=True)
     model.compile(loss='mean_squared_error', optimizer=sgd)

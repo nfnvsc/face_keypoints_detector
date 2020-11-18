@@ -1,32 +1,56 @@
 from PIL import Image
 from model import make_or_restore_model
-from utils import _resize_image, plot_image_points
+from utils.utils import _resize_image, plot_image_points
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import cv2
+import face_recognition
+import config
 #matplotlib.use('TKAgg') #docker
 
 CHECKPOINT_DIR = "/disk2/ckpt"
-cap = cv2.VideoCapture(0)
+
 model = make_or_restore_model(CHECKPOINT_DIR)
 
+cap = cv2.VideoCapture(0)
 while(True):
     # Capture frame-by-frame
     ret, frame = cap.read()
-    
-    X = np.empty((1, 208, 172, 3))
-    X[0] = _resize_image(frame, (208,172))
 
-    labels = model.predict(X)
-    labels = np.reshape(labels, (68,2))
+    small_frame = cv2.resize(frame, (0, 0), fx=0.25, fy=0.25) 
+    face_locations = face_recognition.face_locations(small_frame)
 
-    for point in labels:
-        print(point)
-        print(frame.shape)
-        pt = point * frame.shape[0:2]
-        frame = cv2.circle(frame, (int(pt[0]), int(pt[1])), radius=1, color=(0,0,255))
+    for (top, right, bottom, left) in face_locations:
+        # Scale back up face locations since the frame we detected in was scaled to 1/4 size
+        top *= 4
+        right *= 4
+        bottom *= 4
+        left *= 4
 
+        # Draw a box around the face
+        #cv2.rectangle(frame, (left, top), (right, bottom), (0, 0, 255), 2)
+        print(top, right, bottom, left)
+
+        face_croped = frame[top:top + bottom-top, left:left + right-left]
+        original_shape = face_croped.shape
+        face_croped = _resize_image(face_croped, config.TARGET_SIZE)
+        X = np.empty((1, *config.TARGET_SIZE, 3))
+        X[0] = face_croped
+
+        labels = model.predict(X)[0]
+        age, sex, race = labels[len(labels)-4:-1]
+        print(f"Age: {age*config.MAX_AGE}")
+        print(f"Sex: {sex}")
+        print(f"Race: {race*config.MAX_RACE}")
+        labels = labels[:len(labels)-3]
+        labels = np.reshape(labels, (68,2))
+
+        for point in labels:
+            pt = point * original_shape[0:2]
+            frame = cv2.circle(frame, (int(pt[1]) + left, int(pt[0]) + top) , radius=1, color=(0,255,0))
+
+        cv2.imshow("test", face_croped)
     # Display the resulting frame
     cv2.imshow('frame',frame)
     if cv2.waitKey(1) & 0xFF == ord('q'):

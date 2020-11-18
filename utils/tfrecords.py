@@ -5,7 +5,7 @@ import numpy as np
 import progressbar
 
 from tensorflow.keras.datasets import cifar10
-from utils import _apply_transformations
+from utils.utils import _apply_transformations
 
 tf.compat.v1.enable_eager_execution()
 

@@ -3,3 +3,4 @@ scipy
 numpy
 progressbar
 scikit-image
+opencv-python

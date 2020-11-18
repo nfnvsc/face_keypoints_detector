@@ -1,9 +1,14 @@
+import sys
+sys.path.append("..")
+from face_keypoints_detector import config
 import os
 import pickle
 import queue
 import numpy as np
 import progressbar
 import matplotlib.pyplot as plt
+import face_recognition
+from PIL import Image
 from skimage.transform import resize
 from multiprocessing import Process, cpu_count, Queue, Pool
 
@@ -60,7 +65,6 @@ def _apply_transformations(data, target_size, i):
 
 
 def test(dataset_dir, output_dir, target_size):
-
     target_queue = []
     for dir in os.listdir(dataset_dir):
         file_dir = os.path.join(dataset_dir, dir)
@@ -94,11 +98,81 @@ def create_dataset(args):
 
     with open(target_dir, "wb") as out_file:
         np.savez(out_file, *new_data)
+    
 
+def test_memory(data_dir):
+    import time
+    data = []
+    total = 0
+    for dir in os.listdir(data_dir):
+        try:
+            array = np.load(os.path.join(data_dir, dir))
+            for idx in array:
+                tmp = array[idx][0]
+                target_img = _resize_image(tmp, (64,64))
+                target_img = np.array(target_img, dtype=np.float16)
+                data.append(target_img)
+                total += 1
+                print(total)
+        except Exception:
+            pass
+        break
+    
+    print(data[0].shape)
+    print(data[3].shape)
+    tmp = data[3]
+    start = time.time()
+    tmp *= 255.0
+    print(f"Took: {(time.time()-start)*1000}ms")
+    
+    """
+    start = time.time()
+    tmp = data[0]
+    print(f"Took: {(time.time()-start)*1000}ms")
 
+    start = time.time()
+    tmp = data[4370]
+    print(f"Took: {(time.time()-start)*1000}ms")
+    """
 
+def load_data_to_memory(data_dir, labels_dir, target_size):
+    images = []
+    labels = []
+    MAX_AGE = 116
+    MAX_RACE = 4
+    for i, dir in enumerate(os.listdir(labels_dir)):
+        with open(os.path.join(labels_dir, dir)) as label_file:
+            for line in label_file.readlines():
+                tmp = line.split(" ")
+                
+                file_name = tmp[0] + ".chip.jpg"
+                image = np.array(Image.open(os.path.join(data_dir, file_name)), dtype=np.uint8)
+                img_shape = image.shape[:2]
+                image = np.array(_resize_image(image, target_size)*255, dtype=np.uint8)
+                
+                age, sex, race = file_name.split("_")[:3]
+                features = np.array(tmp[1:-1], dtype=np.float16).reshape(-1, 2)
+                features = np.divide(features, img_shape).flatten()
+                features = np.concatenate(([int(age)/MAX_AGE, int(sex), int(race)/MAX_RACE], features))
+                features = np.maximum(features, 0)
+                
+                images.append(image)
+                labels.append(features)
+
+    with open(f"/disk2/datasets/faces_croped/images_{target_size}.pickle", "wb") as out_file:
+        pickle.dump(images, out_file)
+    with open("/disk2/datasets/faces_croped/labels.pickle", "wb") as out_file:
+        pickle.dump(labels, out_file)
 
 if __name__ == "__main__":
+    with open(f"/disk2/datasets/faces_croped/images_{config.TARGET_SIZE}.pickle", "rb") as out_file:
+        test = pickle.load(out_file)
+
+        plt.imshow(test[15200]/255)
+        plt.show()
+
+    #load_data_to_memory("/disk2/datasets/faces_croped/images", "/disk2/datasets/faces_croped/labels", config.TARGET_SIZE)
+    #test_memory("/disk2/datasets/faces_dataset")
     """
     import time
     dir = "/disk2/test/Jason_Biggs_0_0.npz"
@@ -125,9 +199,11 @@ if __name__ == "__main__":
     create_dataset((data_dir, target_dir, target_size))
     """
 
+    """
     data_dir = "/disk2/datasets/faces_dataset"
     target_dir = "/disk2/test"
     target_size = (208,172)
 
     create_labels(target_dir, target_dir + "/labels.pickle")
     #test(data_dir, target_dir, target_size)
+    """
