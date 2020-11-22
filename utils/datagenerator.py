@@ -25,7 +25,6 @@ class DataGenerator(keras.utils.Sequence):
         self.data_set_y = data_set_y
         if self.data_set_x and self.data_set_y:
             self.list_IDs = [i for i in range(len(data_set_x))]
-
         self.on_epoch_end()
 
     def __len__(self):
@@ -44,7 +43,6 @@ class DataGenerator(keras.utils.Sequence):
         if self.data_set_x and self.data_set_y:
             X = np.empty((self.batch_size, *self.dim, self.n_channels))
             y = np.empty((self.batch_size, self.n_classes))
-
             for i, ID in enumerate(list_IDs_temp):
                 X[i,] = self.data_set_x[ID]/255.0
                 y[i,] = self.data_set_y[ID]

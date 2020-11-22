@@ -39,16 +39,16 @@ while(True):
         X[0] = face_croped
 
         labels = model.predict(X)[0]
-        age, sex, race = labels[len(labels)-4:-1]
-        print(f"Age: {age*config.MAX_AGE}")
-        print(f"Sex: {sex}")
-        print(f"Race: {race*config.MAX_RACE}")
-        labels = labels[:len(labels)-3]
+        #age, sex, race = labels[len(labels)-4:-1]
+        #print(f"Age: {age*config.MAX_AGE}")
+        #print(f"Sex: {sex}")
+        #print(f"Race: {race*config.MAX_RACE}")
+        #labels = labels[:len(labels)-3]
         labels = np.reshape(labels, (68,2))
 
         for point in labels:
             pt = point * original_shape[0:2]
-            frame = cv2.circle(frame, (int(pt[1]) + left, int(pt[0]) + top) , radius=1, color=(0,255,0))
+            frame = cv2.circle(frame, (int(pt[0]) + left, int(pt[1]) + top) , radius=1, color=(0,255,0))
 
         cv2.imshow("test", face_croped)
     # Display the resulting frame
