@@ -1,11 +1,12 @@
 import pickle
 import matplotlib
 import tensorflow as tf
-import config
 import numpy as np
-from utils.datagenerator import DataGenerator
-from model import make_or_restore_model
 from tensorflow.keras.callbacks import ModelCheckpoint, TensorBoard
+
+from utils.datagenerator import DataGenerator
+from models.model import make_or_restore_model
+from config import config
 
 matplotlib.use('TKAgg') #docker
 

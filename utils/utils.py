@@ -1,6 +1,7 @@
 import sys
 sys.path.append("..")
-from face_keypoints_detector import config
+from config import config
+
 import os
 import pickle
 import queue
