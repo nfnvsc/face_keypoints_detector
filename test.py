@@ -1,5 +1,5 @@
 from PIL import Image
-from model import make_or_restore_model
+from models import make_or_restore_model
 from utils.utils import _resize_image, plot_image_points
 import matplotlib
 import matplotlib.pyplot as plt

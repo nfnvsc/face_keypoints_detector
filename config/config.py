@@ -2,6 +2,9 @@
 TARGET_SIZE = (64, 64)
 TARGET_OUTPUT = 68*2
 
+#Model parameters
+MODEL = "inception"
+
 #Directories
 DATASET_DIR = "/datasets/"
 LABELS_DIR = "/datasets/labels.pickle"
