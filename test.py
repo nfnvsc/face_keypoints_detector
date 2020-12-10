@@ -1,15 +1,15 @@
 from PIL import Image
-from models import make_or_restore_model
+from models.model import make_or_restore_model
 from utils.utils import _resize_image, plot_image_points
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import cv2
 import face_recognition
-import config
+from config import config
 #matplotlib.use('TKAgg') #docker
 
-CHECKPOINT_DIR = "/disk2/ckpt"
+CHECKPOINT_DIR = "/disk2/ckpts/face_keypoints_detector/ckpts"
 
 model = make_or_restore_model(CHECKPOINT_DIR)
 
@@ -37,8 +37,9 @@ while(True):
         face_croped = _resize_image(face_croped, config.TARGET_SIZE)
         X = np.empty((1, *config.TARGET_SIZE, 3))
         X[0] = face_croped
-
-        labels = model.predict(X)[0]
+        
+        labels = model.predict(X)
+        labels = labels[0]
         #age, sex, race = labels[len(labels)-4:-1]
         #print(f"Age: {age*config.MAX_AGE}")
         #print(f"Sex: {sex}")

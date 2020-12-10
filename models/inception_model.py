@@ -37,7 +37,8 @@ def inception():
         Inception network
     """
     input_layer = Input(shape=(*config.TARGET_SIZE, 3))
-    x = Conv2D(64, (5, 5), padding='same', strides=(2, 2), activation='relu', name='conv_1_7x7/2', kernel_initializer=kernel_init, bias_initializer=bias_init)(input_layer)
+
+    x = Conv2D(64, (7, 7), padding='same', strides=(2, 2), activation='relu', name='conv_1_7x7/2', kernel_initializer=kernel_init, bias_initializer=bias_init)(input_layer)
     x = MaxPool2D((2, 2), padding='same', strides=(2, 2), name='max_pool_1_3x3/2')(x)
     x = Conv2D(64, (1, 1), padding='same', strides=(1, 1), activation='relu', name='conv_2a_3x3/1')(x)
     x = Conv2D(192, (3, 3), padding='same', strides=(1, 1), activation='relu', name='conv_2b_3x3/1')(x)
@@ -73,14 +74,13 @@ def inception():
                         name='inception_4a')
 
 
-    #x1 = AveragePooling2D((5, 5), strides=3)(x)
-    x1 = Conv2D(128, (1, 1), padding='same', activation='relu')(x)
+    x1 = AveragePooling2D((3, 3), strides=2)(x)
+    x1 = Conv2D(128, (1, 1), padding='same', activation='relu')(x1)
     x1 = Flatten()(x1)
     x1 = Dense(1024, activation='relu')(x1)
     x1 = Dropout(0.7)(x1)
-    x1 = Dense(config.TARGET_OUTPUT, activation='sigmoid', name='output')(x) 
-    #x1 = Dense(10, activation='softmax', name='auxilliary_output_1')(x1)
-    """
+    x1 = Dense(config.TARGET_OUTPUT, activation='sigmoid', name='auxilliary_output_1')(x1)
+
     x = inception_module(x,
                         filters_1x1=160,
                         filters_3x3_reduce=112,
@@ -109,12 +109,12 @@ def inception():
                         name='inception_4d')
 
 
-    x2 = AveragePooling2D((5, 5), strides=3)(x)
-    x2 = Conv2D(128, (1, 1), padding='same', activation='relu')(x2)
+    #x2 = AveragePooling2D((5, 5), strides=3)(x)
+    x2 = Conv2D(128, (1, 1), padding='same', activation='relu')(x)
     x2 = Flatten()(x2)
     x2 = Dense(1024, activation='relu')(x2)
     x2 = Dropout(0.7)(x2)
-    x2 = Dense(10, activation='softmax', name='auxilliary_output_2')(x2)
+    x2 = Dense(config.TARGET_OUTPUT, activation='sigmoid', name='auxilliary_output_2')(x2)
 
     x = inception_module(x,
                         filters_1x1=256,
@@ -125,7 +125,7 @@ def inception():
                         filters_pool_proj=128,
                         name='inception_4e')
 
-    x = MaxPool2D((3, 3), padding='same', strides=(2, 2), name='max_pool_4_3x3/2')(x)
+    x = MaxPool2D((2, 2), padding='same', strides=(2, 2), name='max_pool_4_3x3/2')(x)
 
     x = inception_module(x,
                         filters_1x1=256,
@@ -149,9 +149,10 @@ def inception():
 
     x = Dropout(0.4)(x)
 
-    x = Dense(config.TARGET_OUTPUT, activation='softmax', name='output')(x) 
-    """
+    x = Dense(config.TARGET_OUTPUT, activation='sigmoid', name='output')(x)
+    
     opt = Adam(learning_rate=0.001)
-    model = Model(input_layer, [x, x1], name='inception_v1')
+    model = Model(input_layer, [x, x1, x2], name='inception_v1')
     model.compile(loss='mean_squared_error', optimizer=opt)
+    model.summary()
     return model

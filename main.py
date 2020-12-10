@@ -2,12 +2,14 @@ import pickle
 import matplotlib
 import tensorflow as tf
 import numpy as np
-from tensorflow.keras.callbacks import ModelCheckpoint, TensorBoard
 
+from tensorflow.keras.callbacks import ModelCheckpoint, TensorBoard
 from utils.datagenerator import DataGenerator
 from models.model import make_or_restore_model
 from config import config
 
+#gpu_devices = tf.config.experimental.list_physical_devices('GPU')
+#tf.config.experimental.set_memory_growth(gpu_devices[0], True)
 matplotlib.use('TKAgg') #docker
 
 callbacks = [
@@ -15,8 +17,8 @@ callbacks = [
     # We include the training loss in the folder name.
     ModelCheckpoint(
         filepath=config.CHECKPOINT_DIR + '/ckpt-loss={loss:.6f}',
-        save_freq=10000)
-    #TensorBoard(log_dir=config.LOG_DIR)
+        save_freq=10000),
+    TensorBoard(log_dir=config.CHECKPOINT_DIR)
 ]
 
 #Model parameters
@@ -37,10 +39,11 @@ with open(config.LABELS_DIR_PICKLE, "rb") as in_file:
     y_data = pickle.load(in_file)
 
 x_train = x_data[:int(len(x_data)*0.8)]
-x_validation = x_data[int(len(x_data)*0.8):]
-
 y_train = y_data[:int(len(y_data)*0.8)]
+
+x_validation = x_data[int(len(x_data)*0.8):]
 y_validation = y_data[int(len(y_data)*0.8):]
+
 
 train_generator = DataGenerator(data_set_x=x_train, data_set_y=y_train, **params, data_dir=config.DATASET_DIR)
 validation_generator = DataGenerator(data_set_x=x_validation, data_set_y=y_validation, **params, data_dir=config.DATASET_DIR)

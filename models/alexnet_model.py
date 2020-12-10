@@ -11,7 +11,8 @@ def alexnet():
         AlexNet adapted network
     """
     model = Sequential()
-    model.add(Conv2D(32, (3,3), (1,1), activation="relu", input_shape=(*config.TARGET_SIZE, 3)))
+    model.add(Input(shape=(*config.TARGET_SIZE, 3)))
+    model.add(Conv2D(32, (3,3), (1,1), activation="relu"))
     model.add(BatchNormalization())
     model.add(MaxPooling2D((2,2), strides=(2,2)))
     model.add(Conv2D(64, (1,1), padding="same", activation="relu"))
