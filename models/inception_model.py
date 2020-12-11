@@ -153,6 +153,6 @@ def inception():
     
     opt = Adam(learning_rate=0.001)
     model = Model(input_layer, [x, x1, x2], name='inception_v1')
-    model.compile(loss='mean_squared_error', optimizer=opt)
+    model.compile(loss=['mean_squared_error', 'mean_squared_error', 'mean_squared_error'], optimizer=opt, metrics=['AUC'])
     model.summary()
     return model

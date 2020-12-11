@@ -1,14 +1,14 @@
 import sys
-sys.path.append("..")
+sys.path.append(".")
 from config import config
 
+import cv2
 import os
 import pickle
 import queue
 import numpy as np
 import progressbar
 import matplotlib.pyplot as plt
-import face_recognition
 import imgaug as ia
 import imgaug.augmenters as iaa
 from PIL import Image
@@ -28,7 +28,7 @@ seq = iaa.Sequential([
     #iaa.Crop(px=(1, 16), keep_size=False),
     sometimes(iaa.Clouds()),
     ##iaa.WithChannels((0,1,2), iaa.MultiplyHue((0.2,1.3))),
-    sometimes(iaa.WithChannels((0,1,2), iaa.imgcorruptlike.GaussianNoise(severity=(1,3)))),
+    #sometimes(iaa.WithChannels((0,1,2), iaa.imgcorruptlike.GaussianNoise(severity=(1,3)))),
     #iaa.WithChannels((0,1,2), iaa.MultiplyHue((0.5,1.5))),
     #iaa.WithChannels((0,1,2), iaa.MultiplyHue((0.5,1.5))),
     #iaa.MultiplyHue((0.5, 1.5)),
@@ -36,7 +36,7 @@ seq = iaa.Sequential([
     #    iaa.AveragePooling(11),
     #    start_at=(0.0, 1.0), end_at=(0.0, 1.0)),
     #iaa.SomeOf
-
+    #sometimes(iaa.Pad(((1,50), (1,50), (1,50), (1,50)), keep_size=False)),
     iaa.GaussianBlur((0, 3.0)), # blur images with a sigma between 0 and 3.0
     #iaa.AverageBlur(k=(2, 7)), # blur image using local means with kernel sizes between 2 and 7
     #iaa.MedianBlur(k=(3, 11)), # blur image using local medians with kernel sizes between 2 and 7
@@ -47,6 +47,11 @@ seq = iaa.Sequential([
     #iaa.PerspectiveTransform(scale=(0.1, 0.1), fit_output=True)
 ])
 
+def draw_points_on_frame(frame, labels):
+    for point in labels:
+        pt = point * original_shape[0:2]
+        frame = cv2.circle(frame, (int(pt[0]) + left, int(pt[1]) + top) , radius=1, color=(0,255,0))
+
 def test_augmentation(data_dir, labels_dir, target_size):
     for i, dir in enumerate(os.listdir(labels_dir)):
         with open(os.path.join(labels_dir, dir), "r") as label_file:
@@ -56,12 +61,20 @@ def test_augmentation(data_dir, labels_dir, target_size):
                 
                 file_name = tmp[0] + ".chip.jpg"
                 image = np.array(Image.open(os.path.join(data_dir, file_name)))
-                img = seq(image=image)#, keypoints=pts)
-                img = Image.fromarray(img)
-                img.show()
+                img = Image.fromarray(image)
 
-                #features = np.array(tmp[1:-1], dtype=np.float16).reshape(-1, 2)
+
+                features = np.array(tmp[1:-1], dtype=np.float16).reshape(1, -1, 2)
                 #features = np.divide(features, img_shape).flatten()
+                print(features.shape)
+                img, features = seq(image=image, keypoints=features)
+                for point in features[0]:
+                    pt = point
+                    img = cv2.circle(img, (int(pt[0]), int(pt[1])) , radius=1, color=(0,255,0))
+                while True:
+                    cv2.imshow("test", img)
+                    if cv2.waitKey(1) & 0xFF == ord('q'):
+                        break
                 #features = np.maximum(features, 0)
                 
                 break
@@ -199,15 +212,16 @@ def load_data_to_memory(data_dir, labels_dir, target_size):
                     file_name = tmp[0] + ".chip.jpg"
                     image = np.array(Image.open(os.path.join(data_dir, file_name)), dtype=np.uint8)
                     img_shape = image.shape[:2]
-                    image = seq(image=image)
-                    image = np.array(_resize_image(image, target_size)*255, dtype=np.uint8)
-                    
+
                     #age, sex, race = file_name.split("_")[:3]
-                    features = np.array(tmp[1:-1], dtype=np.float16).reshape(-1, 2)
+                    features = np.array(tmp[1:-1], dtype=np.float16).reshape(1, -1, 2)
+
+                    image, features = seq(image=image, keypoints=features)
+                    image = np.array(_resize_image(image, target_size)*255, dtype=np.uint8)
                     features = np.divide(features, img_shape).flatten()
                     #features = np.concatenate(([int(age)/config.MAX_AGE, int(sex), int(race)/config.MAX_RACE], features))
-                    features = np.maximum(features, 0)
-                    
+                    #features = np.maximum(features, 0)
+
                     images.append(image)
                     labels.append(features)
 
@@ -215,7 +229,6 @@ def load_data_to_memory(data_dir, labels_dir, target_size):
         pickle.dump(images, out_file)
     with open("/disk2/datasets/faces_croped/labels.pickle", "wb") as out_file:
         pickle.dump(labels, out_file)
-
 
 
 
